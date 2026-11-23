@@ -2,7 +2,12 @@
 
 > A practical, side-by-side comparison of two Python API frameworks through real, working code.
 
-## � About This Project
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
+![Python](https://img.shields.io/badge/Python-3.8%2B-3776AB?style=flat-square&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.109-009688?style=flat-square&logo=fastapi&logoColor=white)
+![Django REST Framework](https://img.shields.io/badge/DRF-3.14-A30000?style=flat-square&logo=django&logoColor=white)
+
+## 📖 About This Project
 
 This repository contains **two complete implementations** of the same Todo CRUD API:
 
@@ -80,8 +85,8 @@ uvicorn app.main:app --reload
 
 **Access the API:**
 - 🌐 API Root: http://127.0.0.1:8000
-- � Swagger Docs: http://127.0.0.1:8000/docs
-- � ReDoc: http://127.0.0.1:8000/redoc
+- 📘 Swagger Docs: http://127.0.0.1:8000/docs
+- 📕 ReDoc: http://127.0.0.1:8000/redoc
 
 ### Option 2: Run DRF Project
 
@@ -110,7 +115,7 @@ python manage.py runserver
 **Access the API:**
 - 🌐 API Root: http://127.0.0.1:8000/api/
 - 🎨 Browsable API: http://127.0.0.1:8000/api/todos/
-- � Admin Panel: http://127.0.0.1:8000/admin/
+- 🔐 Admin Panel: http://127.0.0.1:8000/admin/
 
 ---
 
@@ -263,13 +268,7 @@ Contributions are welcome! If you find issues or have suggestions:
 
 ## 📄 License
 
-This project is open source and available for educational purposes.
-
----
-
-## 🌟 Related Article
-
-This repository accompanies a detailed technical article comparing FastAPI and Django REST Framework. Check it out for deeper insights into when to use each framework!
+[MIT](LICENSE)
 
 ---
 
