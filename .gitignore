@@ -24,6 +24,7 @@ wheels/
 *.egg
 
 # Virtual environments
+.venv/
 venv/
 ENV/
 env/
@@ -53,3 +54,7 @@ staticfiles/
 # OS
 .DS_Store
 Thumbs.db
+
+# Tool caches
+.pytest_cache/
+.ruff_cache/

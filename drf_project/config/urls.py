@@ -2,8 +2,9 @@
 URL configuration for DRF Todo project.
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import include, path
 from rest_framework import routers
+
 from api import views
 
 # Create a router and register our viewsets

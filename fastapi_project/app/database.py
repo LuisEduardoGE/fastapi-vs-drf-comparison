@@ -2,7 +2,7 @@
 Database configuration for FastAPI Todo application.
 Uses SQLModel with SQLite for simplicity.
 """
-from sqlmodel import create_engine, Session, SQLModel
+from sqlmodel import Session, SQLModel, create_engine
 
 # SQLite database URL
 DATABASE_URL = "sqlite:///./todos.db"

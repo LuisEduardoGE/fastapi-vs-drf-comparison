@@ -1,9 +1,10 @@
 """
 API routes for Todo CRUD operations.
 """
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
-from typing import List
 
 from . import models, schemas
 from .database import get_db
@@ -87,4 +88,3 @@ async def delete_todo(todo_id: int, session: Session = Depends(get_db)):
     
     session.delete(db_todo)
     session.commit()
-    return None

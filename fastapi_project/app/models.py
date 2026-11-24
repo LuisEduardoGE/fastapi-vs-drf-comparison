@@ -2,6 +2,7 @@
 SQLModel models for the Todo application.
 """
 from typing import Optional
+
 from sqlmodel import Field, SQLModel
 
 

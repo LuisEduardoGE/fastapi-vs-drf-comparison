@@ -1,0 +1,16 @@
+# Ruff default rules, adjusted for framework idioms.
+src = ["fastapi_project", "drf_project"]
+# Keep the syntax the projects were written in (typing.Optional / List).
+target-version = "py38"
+
+[lint]
+# Postponed annotations change how SQLModel/Pydantic resolve field types; not a lint-only fix.
+ignore = ["FA100"]
+
+[lint.flake8-bugbear]
+# FastAPI dependency injection is declared through argument defaults.
+extend-immutable-calls = ["fastapi.Depends"]
+
+[lint.per-file-ignores]
+# Django declares admin options and migrations as mutable class attributes.
+"drf_project/**/*.py" = ["RUF012"]

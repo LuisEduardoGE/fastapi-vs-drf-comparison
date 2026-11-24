@@ -1,9 +1,10 @@
 """
 FastAPI Todo Application - Main entry point.
 """
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
 
 from .database import create_db_and_tables
 from .routes import router

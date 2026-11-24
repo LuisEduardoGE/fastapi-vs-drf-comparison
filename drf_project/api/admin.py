@@ -2,6 +2,7 @@
 Django admin configuration for Todo model.
 """
 from django.contrib import admin
+
 from .models import Todo
 
 

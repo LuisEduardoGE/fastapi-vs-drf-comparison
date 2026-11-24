@@ -1,0 +1,6 @@
+# Both sub-projects plus the test and lint tools, for `make install` and CI.
+-r fastapi_project/requirements.txt
+-r drf_project/requirements.txt
+httpx==0.27.2
+pytest==9.2.0
+ruff==0.17.6

@@ -1,43 +1,121 @@
-# 🚀 FastAPI vs Django REST Framework — A Hands-On Comparison
+# FastAPI vs Django REST Framework
 
-> A practical, side-by-side comparison of two Python API frameworks through real, working code.
+**A practical, side-by-side comparison of two Python API frameworks through the same Todo API, built twice in real, working, tested code.**
 
+[![CI](https://github.com/LuisEduardoGE/fastapi-vs-drf-comparison/actions/workflows/ci.yml/badge.svg)](https://github.com/LuisEduardoGE/fastapi-vs-drf-comparison/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
-![Python](https://img.shields.io/badge/Python-3.8%2B-3776AB?style=flat-square&logo=python&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.12-3776AB?style=flat-square&logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.109-009688?style=flat-square&logo=fastapi&logoColor=white)
+![Django](https://img.shields.io/badge/Django-4.2-092E20?style=flat-square&logo=django&logoColor=white)
 ![Django REST Framework](https://img.shields.io/badge/DRF-3.14-A30000?style=flat-square&logo=django&logoColor=white)
 
-## 📖 About This Project
+This repository contains **two complete implementations** of the same Todo CRUD API — `fastapi_project/` (FastAPI + SQLModel) and `drf_project/` (Django REST Framework) — so you can compare code structure and complexity, developer experience, built-in features, and async vs sync approaches when choosing a framework for your next project.
 
-This repository contains **two complete implementations** of the same Todo CRUD API:
+## Table of Contents
 
-- **`fastapi_project/`** — Built with FastAPI + SQLModel
-- **`drf_project/`** — Built with Django REST Framework
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Quick Start](#quick-start)
+- [API](#api)
+- [Key Differences at a Glance](#key-differences-at-a-glance)
+- [Code Comparison Highlights](#code-comparison-highlights)
+- [Testing](#testing)
+- [Project Structure](#project-structure)
 
-Both projects implement identical functionality, allowing you to compare:
-- Code structure and complexity
-- Developer experience
-- Performance characteristics
-- Built-in features
-- Async vs sync approaches
+## Features
 
-**Purpose:** This is a learning resource and technical comparison tool for developers choosing between FastAPI and Django REST Framework for their next project.
+- The same Todo model (`id`, `title`, `description`, `completed`) and CRUD operations in both frameworks.
+- FastAPI: typed SQLModel model, separate Pydantic request/response schemas, partial updates on `PUT`, Swagger UI at `/docs` and ReDoc at `/redoc`, `/health` endpoint.
+- DRF: `ModelViewSet` + `DefaultRouter`, browsable API, Django admin with list filters and inline editing, page-number pagination (100 per page), `PATCH` support.
+- SQLite in both, no external services.
+- Test suites for both (pytest + `TestClient` for FastAPI, Django's test runner for DRF), run in CI.
 
----
+## Tech Stack
 
-## 🎯 What's Implemented
+| Layer | FastAPI project | DRF project |
+|---|---|---|
+| Framework | FastAPI 0.109.0 — modern async web framework | Django 4.2.9 + Django REST Framework 3.14.0 |
+| Data layer | SQLModel 0.0.14 — SQL databases with Python type hints | Django ORM with migrations |
+| Server | Uvicorn (ASGI) | Django development server (`runserver`) |
+| Database | SQLite (`todos.db`) | SQLite (`db.sqlite3`) |
+| Extras | CORS middleware | django-cors-headers, Django admin |
+| Tests | pytest, FastAPI `TestClient`, in-memory SQLite | Django test runner, DRF `APITestCase` |
+
+## Architecture
+
+```mermaid
+flowchart LR
+  C["HTTP client<br/>curl / browser"]
+  subgraph FA["fastapi_project"]
+    FM["main.py<br/>app, CORS, /, /health"] --> FR["routes.py<br/>/todos CRUD"]
+    FR --> FS["schemas.py<br/>Pydantic in/out"]
+    FR --> FD["database.py<br/>Session per request"]
+    FD --> FDB[("todos.db")]
+  end
+  subgraph DR["drf_project"]
+    DU["config/urls.py<br/>DefaultRouter"] --> DV["api/views.py<br/>TodoViewSet"]
+    DV --> DS["api/serializers.py"]
+    DV --> DM["api/models.py<br/>Django ORM"]
+    DM --> DDB[("db.sqlite3")]
+    DU --> DA["Django admin"]
+  end
+  C --> FM
+  C --> DU
+```
+
+The two projects share nothing at runtime; each is a standalone app with its own SQLite file. FastAPI wires the database in through a `Depends(get_db)` dependency and creates tables on startup; DRF gets CRUD, routing and the browsable API from a single `ModelViewSet` registered on a router, with the schema managed by Django migrations.
+
+## Quick Start
+
+Prerequisites: Python 3.10+ (CI runs 3.10 and 3.12), `make` (optional).
+
+```bash
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+make install                     # both sub-projects + pytest, httpx, ruff
+
+make run-fastapi                 # http://127.0.0.1:8000  (FASTAPI_PORT=...)
+make run-drf                     # migrates, then http://127.0.0.1:8001  (DRF_PORT=...)
+```
+
+Without make, run each project from its own folder:
+
+```bash
+# FastAPI
+cd fastapi_project
+pip install -r requirements.txt
+uvicorn app.main:app --reload            # http://127.0.0.1:8000
+
+# DRF
+cd drf_project
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py createsuperuser         # optional, for the admin panel
+python manage.py runserver 8001          # http://127.0.0.1:8001
+```
+
+**FastAPI:** API root http://127.0.0.1:8000 · Swagger docs http://127.0.0.1:8000/docs · ReDoc http://127.0.0.1:8000/redoc
+
+**DRF:** API root http://127.0.0.1:8001/api/ · Browsable API http://127.0.0.1:8001/api/todos/ · Admin panel http://127.0.0.1:8001/admin/
+
+Each sub-project also has its own README: [`fastapi_project/README.md`](fastapi_project/README.md) and [`drf_project/README.md`](drf_project/README.md).
+
+## API
 
 Both projects expose a **Todo API** with full CRUD operations:
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/todos/` | Create a new todo |
-| GET | `/todos/` | List all todos |
-| GET | `/todos/{id}` | Get a specific todo |
-| PUT | `/todos/{id}` | Update a todo |
-| DELETE | `/todos/{id}` | Delete a todo |
+| Operation | FastAPI | DRF |
+|---|---|---|
+| Create a todo | `POST /todos/` | `POST /api/todos/` |
+| List all todos | `GET /todos/` (plain list) | `GET /api/todos/` (paginated: `count`, `next`, `previous`, `results`) |
+| Get a todo | `GET /todos/{id}` | `GET /api/todos/{id}/` |
+| Update a todo | `PUT /todos/{id}` (only the fields sent) | `PUT /api/todos/{id}/` (full) · `PATCH /api/todos/{id}/` (partial) |
+| Delete a todo | `DELETE /todos/{id}` → 204 | `DELETE /api/todos/{id}/` → 204 |
+| Root / health | `GET /` · `GET /health` | `GET /` · `GET /api/` |
 
-**Todo Model:**
+**Todo model:**
+
 ```json
 {
   "id": 1,
@@ -47,79 +125,28 @@ Both projects expose a **Todo API** with full CRUD operations:
 }
 ```
 
----
-
-## 🏗️ Tech Stack
-
-### FastAPI Project
-- **FastAPI** 0.109.0 — Modern async web framework
-- **SQLModel** 0.0.14 — SQL databases with Python type hints
-- **Uvicorn** — ASGI server
-- **SQLite** — Database
-
-### DRF Project
-- **Django** 4.2.9 — Full-featured web framework
-- **Django REST Framework** 3.14.0 — Powerful REST toolkit
-- **SQLite** — Database
-
----
-
-## 🚀 Quick Start
-
-### Option 1: Run FastAPI Project
+Create a todo:
 
 ```bash
-# Navigate to FastAPI project
-cd fastapi_project
+# FastAPI
+curl -X POST "http://127.0.0.1:8000/todos/" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Buy milk","description":"Remember to stop at the store","completed":false}'
 
-# Create virtual environment (recommended)
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run the server
-uvicorn app.main:app --reload
+# DRF
+curl -X POST "http://127.0.0.1:8001/api/todos/" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Buy milk","description":"Remember to stop at the store","completed":false}'
 ```
 
-**Access the API:**
-- 🌐 API Root: http://127.0.0.1:8000
-- 📘 Swagger Docs: http://127.0.0.1:8000/docs
-- 📕 ReDoc: http://127.0.0.1:8000/redoc
-
-### Option 2: Run DRF Project
+List all todos:
 
 ```bash
-# Navigate to DRF project
-cd drf_project
-
-# Create virtual environment (recommended)
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run migrations
-python manage.py makemigrations
-python manage.py migrate
-
-# (Optional) Create superuser for admin panel
-python manage.py createsuperuser
-
-# Run the server
-python manage.py runserver
+curl "http://127.0.0.1:8000/todos/"       # FastAPI
+curl "http://127.0.0.1:8001/api/todos/"   # DRF
 ```
 
-**Access the API:**
-- 🌐 API Root: http://127.0.0.1:8000/api/
-- 🎨 Browsable API: http://127.0.0.1:8000/api/todos/
-- 🔐 Admin Panel: http://127.0.0.1:8000/admin/
-
----
-
-## 📊 Key Differences at a Glance
+## Key Differences at a Glance
 
 | Aspect | FastAPI | Django REST Framework |
 |--------|---------|----------------------|
@@ -133,75 +160,9 @@ python manage.py runserver
 | **Learning Curve** | Easy for modern Python | Requires Django knowledge |
 | **Best For** | Microservices, async APIs | Full web apps, monoliths |
 
----
+In this repo the FastAPI handlers are `async def` but use a synchronous SQLModel session, so each database call blocks the event loop while it runs. That is fine for a demo; for real async throughput you would use plain `def` handlers (run in a thread pool) or an async database driver.
 
-## 📁 Repository Structure
-
-```
-fastapi-vs-drf-comparison/
-│
-├── fastapi_project/              # FastAPI implementation
-│   ├── app/
-│   │   ├── main.py              # Application entry point
-│   │   ├── models.py            # SQLModel database models
-│   │   ├── schemas.py           # Pydantic request/response schemas
-│   │   ├── routes.py            # API route handlers
-│   │   └── database.py          # Database configuration
-│   ├── requirements.txt         # Python dependencies
-│   └── README.md               # FastAPI project documentation
-│
-└── drf_project/                  # Django REST Framework implementation
-    ├── config/                   # Django project configuration
-    │   ├── settings.py          # Django settings
-    │   ├── urls.py              # URL routing
-    │   ├── wsgi.py              # WSGI configuration
-    │   └── asgi.py              # ASGI configuration
-    ├── api/                      # Django app
-    │   ├── models.py            # Django ORM models
-    │   ├── serializers.py       # DRF serializers
-    │   ├── views.py             # DRF ViewSets
-    │   ├── admin.py             # Admin panel configuration
-    │   └── tests.py             # Unit tests
-    ├── manage.py                # Django management script
-    ├── requirements.txt         # Python dependencies
-    └── README.md               # DRF project documentation
-```
-
----
-
-## 🧪 Testing the APIs
-
-### Example: Create a Todo
-
-**FastAPI:**
-```bash
-curl -X POST "http://127.0.0.1:8000/todos/" \
-  -H "Content-Type: application/json" \
-  -d '{"title":"Buy milk","description":"Remember to stop at the store","completed":false}'
-```
-
-**DRF:**
-```bash
-curl -X POST "http://127.0.0.1:8000/api/todos/" \
-  -H "Content-Type: application/json" \
-  -d '{"title":"Buy milk","description":"Remember to stop at the store","completed":false}'
-```
-
-### Example: List All Todos
-
-**FastAPI:**
-```bash
-curl "http://127.0.0.1:8000/todos/"
-```
-
-**DRF:**
-```bash
-curl "http://127.0.0.1:8000/api/todos/"
-```
-
----
-
-## 💡 Code Comparison Highlights
+## Code Comparison Highlights
 
 ### Models
 
@@ -224,52 +185,61 @@ class Todo(models.Model):
 
 ### Views/Endpoints
 
-**FastAPI:**
+**FastAPI** (one function per operation):
 ```python
-@router.get("/todos")
+router = APIRouter(prefix="/todos", tags=["todos"])
+
+@router.get("/", response_model=List[schemas.TodoResponse])
 async def list_todos(session: Session = Depends(get_db)):
-    return session.exec(select(Todo)).all()
+    return session.exec(select(models.Todo)).all()
 ```
 
-**DRF:**
+**DRF** (one class for all five operations):
 ```python
 class TodoViewSet(viewsets.ModelViewSet):
     queryset = Todo.objects.all()
     serializer_class = TodoSerializer
 ```
 
----
+## Testing
 
-## 🎓 Learning Resources
+```bash
+make test            # both suites
+make test-fastapi    # cd fastapi_project && python -m pytest -q
+make test-drf        # cd drf_project && python manage.py test
+make lint            # ruff check .
+```
 
-Each project folder contains its own detailed README with:
-- Installation instructions
-- API endpoint documentation
-- Code structure explanation
-- Framework-specific features
+- **FastAPI — 11 tests pass.** `TestClient` against an in-memory SQLite database (the `get_db` dependency is overridden, so no `todos.db` is written): health and root, create, validation (422), list, get, partial update, delete, and 404 for get/update/delete of a missing todo.
+- **DRF — 5 tests pass.** `APITestCase` on Django's throwaway test database: create, list, retrieve, update and delete.
 
-**Explore:**
-- [`fastapi_project/README.md`](./fastapi_project/README.md) — FastAPI implementation details
-- [`drf_project/README.md`](./drf_project/README.md) — DRF implementation details
+## Project Structure
 
----
+```
+fastapi-vs-drf-comparison/
+├── fastapi_project/          FastAPI implementation
+│   ├── app/
+│   │   ├── main.py           Application entry point, CORS, / and /health
+│   │   ├── models.py         SQLModel database model
+│   │   ├── schemas.py        Pydantic request/response schemas
+│   │   ├── routes.py         /todos route handlers
+│   │   └── database.py       Engine, table creation, session dependency
+│   ├── tests/                pytest suite
+│   └── requirements.txt
+├── drf_project/              Django REST Framework implementation
+│   ├── config/               Django settings, URL routing, WSGI/ASGI
+│   ├── api/                  Model, serializer, ViewSet, admin, migrations, tests
+│   ├── manage.py
+│   └── requirements.txt
+├── requirements-dev.txt      Both projects + test and lint tools
+├── ruff.toml                 Lint configuration
+└── Makefile                  install / run-fastapi / run-drf / test / lint / clean
+```
 
-## 🤝 Contributing
+## Author
 
-Contributions are welcome! If you find issues or have suggestions:
+**Luis Eduardo G. Espindola** · [GitHub](https://github.com/LuisEduardoGE) · [LinkedIn](https://www.linkedin.com/in/luisgespindola/)
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/improvement`)
-3. Commit your changes (`git commit -am 'Add new feature'`)
-4. Push to the branch (`git push origin feature/improvement`)
-5. Open a Pull Request
+## License
 
----
-
-## 📄 License
-
-[MIT](LICENSE)
-
----
-
-**Built with ❤️ for the Python developer community**
+[MIT](LICENSE) © Luis Eduardo G. Espindola
